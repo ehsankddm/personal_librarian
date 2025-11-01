@@ -80,24 +80,32 @@ class Agent(ABC):
         self.retry_count = 0
         self.max_retries = 3  # Default, can be overridden by preferences
         
-        # Register with registry
-        if registry:
-            registry.register(
-                agent_id=agent_id,
-                role=role,
-                name=name,
-                traits=list(traits.keys()) if traits else [],
-                replica_id=replica_id
-            )
+        # Note: Agents must self-register via describe_capabilities() after initialization
+        # because Registry.register_agent requires capabilities_summary
     
     def _load_instinct_paths(self) -> list[str]:
-        """Load instinct file paths (default + role-specific)."""
-        paths = ["instincts/default_agent_instinct.md"]
+        """Load instinct file paths (society_values + default + role-specific)."""
+        paths = []
+        
+        # Always load society_values first
+        if Path("instincts/society_values.md").exists():
+            paths.append("instincts/society_values.md")
+        
+        # Add default agent instinct
+        if Path("instincts/default_agent_instinct.md").exists():
+            paths.append("instincts/default_agent_instinct.md")
         
         # Add role-specific instinct
+        # Try full role name first, then without "Agent" suffix
         role_instinct = f"instincts/{self.role.lower()}_instinct.md"
         if Path(role_instinct).exists():
             paths.append(role_instinct)
+        else:
+            # Try without "Agent" suffix (e.g. "PlannerAgent" -> "planner")
+            role_without_agent = self.role.lower().replace("agent", "")
+            role_instinct_alt = f"instincts/{role_without_agent}_instinct.md"
+            if Path(role_instinct_alt).exists():
+                paths.append(role_instinct_alt)
         
         return paths
     

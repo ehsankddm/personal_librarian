@@ -1,4 +1,16 @@
 {
-  "policies": []
+  "network": {
+    "allow_external_requests": false,
+    "allowed_domains": []
+  },
+  "filesystem": {
+    "allow_delete": false
+  },
+  "cost": {
+    "max_cloud_cost_per_day_eur": 0
+  },
+  "_locks": {
+    "filesystem.allow_delete": "user_only",
+    "cost.max_cloud_cost_per_day_eur": "user_only"
+  }
 }
-

@@ -430,7 +430,7 @@ class Planner:
             message_type=MessageType.ESCALATION,
             sender_id="Planner",
             content=f"Planner escalation: {reason}",
-            receiver_id="InterfaceAgent",
+            receiver_id="user",
             tags=["escalation", "user_approval"]
         )
         

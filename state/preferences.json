@@ -1,8 +1,8 @@
 {
-  "verbosity_level": "normal",
-  "response_style": "professional",
-  "auto_actions": false,
-  "safety_tolerance": 0.5,
-  "custom_preferences": {}
+  "communication.verbosity": "normal",
+  "communication.style": "neutral",
+  "summary.style": "short_bullets",
+  "max_retries": 3,
+  "confirmation.require_before_send_to_kindle": true,
+  "confirmation.require_before_delete": true
 }
-

@@ -100,11 +100,12 @@ class Gatekeeper:
             )
         
         # Step 3: Check cost constraints
-        if request.estimated_cost_eur > constraints.get("max_cost_eur", float('inf')):
+        max_cost = constraints.get("max_cloud_cost_per_day_eur", float('inf'))
+        if max_cost is not None and request.estimated_cost_eur > max_cost:
             return GatekeeperDecision(
                 approved=False,
                 ask_user=False,
-                reason=f"Cost exceeds policy limit: €{request.estimated_cost_eur}",
+                reason=f"Cost exceeds policy limit: €{request.estimated_cost_eur} > €{max_cost}",
                 constraints=constraints
             )
         

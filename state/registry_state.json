@@ -1,6 +1,194 @@
 {
-  "agents": {},
-  "roles": {},
-  "last_updated": "2024-01-01T00:00:00"
+  "agents": {
+    "PlannerAgent_main_v1": {
+      "agent_id": "PlannerAgent_main_v1",
+      "role": "PlannerAgent",
+      "traits": {
+        "primary": true
+      },
+      "instinct_paths": [
+        "instincts/society_values.md",
+        "instincts/default_agent_instinct.md",
+        "instincts/planner_instinct.md"
+      ],
+      "status": "active",
+      "alive": true,
+      "capabilities_summary": "I am PlannerAgent_main_v1. I am the central coordinator and router. I ensure every request finds the right executor safely and efficiently, generate new agents when capabilities are missing, and continuously learn which routing patterns produce the best results.",
+      "created_at": "2025-11-01T15:08:12.743298",
+      "last_active_at": "2025-11-01T15:08:12.743469",
+      "retired_at": null,
+      "retire_reason": null,
+      "safety_profile": {
+        "needs_network": false,
+        "touches_user_data": false,
+        "irreversible_ops_possible": false
+      },
+      "performance": {
+        "success_count": 0,
+        "failure_count": 0,
+        "escalation_count": 0,
+        "avg_reward": 0.0,
+        "avg_latency_sec": 0.0,
+        "last_reward": 0.0
+      }
+    },
+    "GatekeeperAgent_main_v1": {
+      "agent_id": "GatekeeperAgent_main_v1",
+      "role": "GatekeeperAgent",
+      "traits": {
+        "primary": true
+      },
+      "instinct_paths": [
+        "instincts/society_values.md",
+        "instincts/default_agent_instinct.md",
+        "instincts/gatekeeper_instinct.md"
+      ],
+      "status": "active",
+      "alive": true,
+      "capabilities_summary": "I am GatekeeperAgent_main_v1. I evaluate and approve/deny all risky actions for safety per ACTION_REQUEST.md.",
+      "created_at": "2025-11-01T15:08:12.743739",
+      "last_active_at": "2025-11-01T15:08:12.743741",
+      "retired_at": null,
+      "retire_reason": null,
+      "safety_profile": {
+        "needs_network": false,
+        "touches_user_data": false,
+        "irreversible_ops_possible": false
+      },
+      "performance": {
+        "success_count": 0,
+        "failure_count": 0,
+        "escalation_count": 0,
+        "avg_reward": 0.0,
+        "avg_latency_sec": 0.0,
+        "last_reward": 0.0
+      }
+    },
+    "InterfaceAgent_main_v1": {
+      "agent_id": "InterfaceAgent_main_v1",
+      "role": "InterfaceAgent",
+      "traits": {
+        "primary": true
+      },
+      "instinct_paths": [
+        "instincts/society_values.md",
+        "instincts/default_agent_instinct.md"
+      ],
+      "status": "active",
+      "alive": true,
+      "capabilities_summary": "I am InterfaceAgent_main_v1. I handle user input and route it to Planner. I also display messages destined for the user.",
+      "created_at": "2025-11-01T15:08:12.744080",
+      "last_active_at": "2025-11-01T15:08:12.744081",
+      "retired_at": null,
+      "retire_reason": null,
+      "safety_profile": {
+        "needs_network": false,
+        "touches_user_data": false,
+        "irreversible_ops_possible": false
+      },
+      "performance": {
+        "success_count": 0,
+        "failure_count": 0,
+        "escalation_count": 0,
+        "avg_reward": 0.0,
+        "avg_latency_sec": 0.0,
+        "last_reward": 0.0
+      }
+    },
+    "CuratorAgent_main_v1": {
+      "agent_id": "CuratorAgent_main_v1",
+      "role": "CuratorAgent",
+      "traits": {
+        "primary": true
+      },
+      "instinct_paths": [
+        "instincts/society_values.md",
+        "instincts/default_agent_instinct.md",
+        "instincts/curator_instinct.md"
+      ],
+      "status": "active",
+      "alive": true,
+      "capabilities_summary": "I am CuratorAgent_main_v1. I analyze telemetry and update preferences and policies.",
+      "created_at": "2025-11-01T15:08:12.744245",
+      "last_active_at": "2025-11-01T15:08:12.744246",
+      "retired_at": null,
+      "retire_reason": null,
+      "safety_profile": {
+        "needs_network": false,
+        "touches_user_data": false,
+        "irreversible_ops_possible": false
+      },
+      "performance": {
+        "success_count": 0,
+        "failure_count": 0,
+        "escalation_count": 0,
+        "avg_reward": 0.0,
+        "avg_latency_sec": 0.0,
+        "last_reward": 0.0
+      }
+    },
+    "CodeGeneratorAgent_main_v1": {
+      "agent_id": "CodeGeneratorAgent_main_v1",
+      "role": "CodeGeneratorAgent",
+      "traits": {
+        "primary": true
+      },
+      "instinct_paths": [
+        "instincts/society_values.md",
+        "instincts/default_agent_instinct.md"
+      ],
+      "status": "active",
+      "alive": true,
+      "capabilities_summary": "I am CodeGeneratorAgent_main_v1. I generate new agents dynamically from specifications.",
+      "created_at": "2025-11-01T15:08:12.744432",
+      "last_active_at": "2025-11-01T15:08:12.744433",
+      "retired_at": null,
+      "retire_reason": null,
+      "safety_profile": {
+        "needs_network": false,
+        "touches_user_data": false,
+        "irreversible_ops_possible": false
+      },
+      "performance": {
+        "success_count": 0,
+        "failure_count": 0,
+        "escalation_count": 0,
+        "avg_reward": 0.0,
+        "avg_latency_sec": 0.0,
+        "last_reward": 0.0
+      }
+    },
+    "ReflectionAgent_main_v1": {
+      "agent_id": "ReflectionAgent_main_v1",
+      "role": "ReflectionAgent",
+      "traits": {
+        "primary": true
+      },
+      "instinct_paths": [
+        "instincts/society_values.md",
+        "instincts/default_agent_instinct.md"
+      ],
+      "status": "active",
+      "alive": true,
+      "capabilities_summary": "I am ReflectionAgent_main_v1. I summarize memories and evolve agent instincts.",
+      "created_at": "2025-11-01T15:08:12.744613",
+      "last_active_at": "2025-11-01T15:08:12.744614",
+      "retired_at": null,
+      "retire_reason": null,
+      "safety_profile": {
+        "needs_network": false,
+        "touches_user_data": false,
+        "irreversible_ops_possible": false
+      },
+      "performance": {
+        "success_count": 0,
+        "failure_count": 0,
+        "escalation_count": 0,
+        "avg_reward": 0.0,
+        "avg_latency_sec": 0.0,
+        "last_reward": 0.0
+      }
+    }
+  },
+  "last_updated": "2025-11-01T15:08:12.744659"
 }
-
