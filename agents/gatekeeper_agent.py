@@ -1,0 +1,147 @@
+"""Gatekeeper Agent - Validates all real-world actions per ACTION_REQUEST.md."""
+
+from typing import Optional
+from core.message import Message, MessageType
+from agents.agent_core import Agent
+from actions.action_request import ActionRequest
+from core.gatekeeper import Gatekeeper
+
+
+class GatekeeperAgent(Agent):
+    """Agent responsible for safety and policy enforcement."""
+    
+    def __init__(self, gatekeeper: Gatekeeper, **kwargs):
+        super().__init__(**kwargs)
+        self.gatekeeper = gatekeeper
+    
+    async def can_handle(self, message: Message) -> bool:
+        """Handle action approval requests."""
+        if self.retired:
+            return False
+        
+        return (
+            message.message_type == MessageType.REQUEST and
+            "action_request" in message.metadata
+        )
+    
+    async def handle(self, message: Message) -> Optional[Message]:
+        """
+        Evaluate an action request per ACTION_REQUEST.md Section 4.
+        
+        Steps:
+        1. Extract ActionRequest from message
+        2. Evaluate via Gatekeeper
+        3. If AUTO-APPROVE: execute and return success
+        4. If ASK_USER: send approval request to user
+        5. If DENY: return denial with reason
+        """
+        action_request = message.metadata.get("action_request")
+        
+        if not action_request or not isinstance(action_request, ActionRequest):
+            response_content = "No valid action request provided."
+            return Message(
+                message_type=MessageType.RESPONSE,
+                sender_id=self.agent_id,
+                content=response_content,
+                receiver_id=message.sender_id
+            )
+        
+        # Evaluate via Gatekeeper
+        approved, reason = await self.gatekeeper.evaluate_action(action_request)
+        
+        # Log evaluation
+        self.log_event({
+            'type': 'task_result',
+            'success': approved and 'ASK_USER' not in reason,
+            'action_type': action_request.action_type.value if action_request.action_type else 'unknown',
+            'reason': reason,
+            'request_id': action_request.request_id
+        })
+        
+        # Handle different decision types
+        if 'ASK_USER' in reason:
+            # Forward approval request to user
+            return await self._request_user_approval(action_request, message.sender_id)
+        elif approved:
+            # Auto-approved, execute
+            success, result = await self.gatekeeper.execute_action(action_request)
+            
+            if success:
+                response_content = f"Gatekeeper: Request {action_request.request_id} executed successfully. {reason}"
+            else:
+                response_content = f"Gatekeeper: Request {action_request.request_id} failed: {result}"
+            
+            return Message(
+                message_type=MessageType.RESPONSE,
+                sender_id=self.agent_id,
+                content=response_content,
+                receiver_id=message.sender_id
+            )
+        else:
+            # Denied
+            response_content = f"Denied: {reason}"
+            
+            # Log denial for retirement tracking
+            self.log_event({
+                'type': 'task_result',
+                'success': False,
+                'action_type': action_request.action_type.value if action_request.action_type else 'unknown',
+                'reason': reason,
+                'denied_for_policy': True
+            })
+            
+            return Message(
+                message_type=MessageType.RESPONSE,
+                sender_id=self.agent_id,
+                content=response_content,
+                receiver_id=message.sender_id
+            )
+    
+    async def _request_user_approval(
+        self,
+        action_request: ActionRequest,
+        requester_id: str
+    ) -> Message:
+        """
+        Request user approval per ACTION_REQUEST.md Section 4.3.
+        
+        Format:
+        "BackupAgent_immediate_v5 wants to upload 3 encrypted files to Google Drive.
+        Data sensitivity: medium (encrypted content only).
+        Cost: €0.00.
+        Irreversible: no.
+        Approve? [yes/no]"
+        """
+        approval_message = f"""
+{action_request.requester_agent_id} wants to perform: {action_request.action_type.value if action_request.action_type else 'Unknown'}
+
+Justification: {action_request.justification}
+
+User Impact: {action_request.user_impact}
+Data Sensitivity: {action_request.data_sensitivity.value if action_request.data_sensitivity else 'Unknown'}
+Cost: €{action_request.estimated_cost_eur:.2f}
+Reversibility: {action_request.reversibility.value if action_request.reversibility else 'Unknown'}
+
+Approve? [yes/no]
+Request ID: {action_request.request_id}
+        """.strip()
+        
+        # Send to InterfaceAgent for user display
+        await self.speak(
+            content=approval_message,
+            recipient="InterfaceAgent",
+            message_type=MessageType.REQUEST,
+            tags=["user_approval", "gatekeeper"]
+        )
+        
+        # Also return acknowledgment to requester
+        return Message(
+            message_type=MessageType.RESPONSE,
+            sender_id=self.agent_id,
+            content=f"User approval requested for {action_request.request_id}. Waiting for response.",
+            receiver_id=requester_id
+        )
+    
+    def describe_capabilities(self) -> str:
+        """Describe what this agent can do."""
+        return f"I am {self.agent_id}. I evaluate and approve/deny all risky actions for safety per ACTION_REQUEST.md."

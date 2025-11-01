@@ -1,0 +1,8 @@
+{
+  "verbosity_level": "normal",
+  "response_style": "professional",
+  "auto_actions": false,
+  "safety_tolerance": 0.5,
+  "custom_preferences": {}
+}
+

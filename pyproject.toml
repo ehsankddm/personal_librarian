@@ -1,0 +1,37 @@
+[project]
+name = "personal-librarian"
+version = "0.1.0"
+description = "A self-improving digital librarian with multi-agent architecture"
+authors = [{name = "Your Name", email = "your@email.com"}]
+requires-python = ">=3.11"
+dependencies = [
+    "pydantic>=2.0.0",
+    "aiohttp>=3.9.0",
+    "openai>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+    "mypy>=1.0.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.black]
+line-length = 100
+target-version = ['py311']
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+

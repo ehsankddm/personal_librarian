@@ -1,0 +1,11 @@
+{
+  "theme": "dark",
+  "language": "en",
+  "features": {
+    "chat_interface": true,
+    "book_browser": false,
+    "search": false,
+    "settings": true
+  }
+}
+
