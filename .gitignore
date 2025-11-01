@@ -1,0 +1,78 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Project specific
+state/telemetry.db
+logs/*.log
+*.db
+*.sqlite
+*.sqlite3
+
+# Books and data
+books/by-id/*
+!books/by-id/.gitkeep
+books/metadata_exports/*
+!books/metadata_exports/.gitkeep
+books/encrypted_backup/*
+!books/encrypted_backup/.gitkeep
+
+# Memory
+memory/agents/**/*.md
+!memory/agents/.gitkeep
+memory/society/*.md
+!memory/society/.gitkeep
+memory/archives/
+!memory/archives/.gitkeep
+
+# Generated specs
+agents_generated_specs/requested_capabilities/*
+!agents_generated_specs/requested_capabilities/.gitkeep
+agents_generated_specs/drafts/*
+!agents_generated_specs/drafts/.gitkeep
+agents_generated_specs/accepted/*
+!agents_generated_specs/accepted/.gitkeep
+
+# Dynamic agents
+agents/dynamic/*
+!agents/dynamic/.gitkeep
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+

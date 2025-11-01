@@ -152,22 +152,25 @@ class Planner:
         Query registry for active replicas with relevant capabilities.
         Per PLANNER.md Section 5.2(2)
         """
-        candidates = []
-        all_agents = self.registry.get_agents()
+        # Map task types to roles
+        task_to_role = {
+            "ingestion": "IngestionAgent",
+            "backup": "BackupAgent",
+            "enrichment": "EnrichmentAgent",
+            "metadata": "WebMetadataAgent",
+            "agent_creation": "CodeGeneratorAgent",
+        }
         
-        for agent_id, agent_info in all_agents.items():
-            if agent_info.status != "active":
-                continue
-            
-            # Match by role or task type
-            role_lower = agent_info.role.lower()
-            task_lower = intent.task_type.lower()
-            
-            if task_lower in role_lower or role_lower in task_lower:
-                candidates.append(agent_info)
-            elif intent.task_type == "unknown":
-                # If intent is unknown, consider all active agents
-                candidates.append(agent_info)
+        # Determine role to search for
+        role = None
+        if intent.task_type in task_to_role:
+            role = task_to_role[intent.task_type]
+        elif intent.task_type != "unknown":
+            # Try to match by name
+            role = intent.task_type.replace("_", "").title()
+        
+        # Use Registry's list_candidates for proper filtering
+        candidates = self.registry.list_candidates(role=role)
         
         return candidates
     

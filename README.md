@@ -54,6 +54,7 @@ python run_dev.py
 - `PHASE_0_PROGRESS.md` - Agent skeleton implementation status
 - `PHASE_0_ACTION_REQUEST.md` - ActionRequest system implementation
 - `PHASE_0_PLANNER.md` - Planner and Message Bus implementation
+- `PHASE_0_REGISTRY.md` - Registry and Replica Management
 
 ## 🏗️ Architecture
 

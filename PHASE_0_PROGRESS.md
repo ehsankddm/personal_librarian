@@ -125,9 +125,12 @@ The implementation fully conforms to the Agent Skeleton Specification:
 
 **Phase 0 Planner System: COMPLETE** ✅
 
+**Phase 0 Registry & Replica Management: COMPLETE** ✅
+
 The foundation for the multi-agent society is in place and ready for Phase 1 (Self-Expression).
 
 For implementation details, see:
 - `PHASE_0_ACTION_REQUEST.md` - ActionRequest system
-- `PHASE_0_PLANNER.md` - Planner system
+- `PHASE_0_PLANNER.md` - Planner and Message Bus system
+- `PHASE_0_REGISTRY.md` - Registry and Replica Management
 
