@@ -8,11 +8,10 @@ from .router_learner import RouterLearner
 from .evaluator import Evaluator
 
 __all__ = [
-    'TelemetryCollector',
-    'RewardEngine',
-    'PreferenceLearner',
-    'PolicyLearner',
-    'RouterLearner',
-    'Evaluator',
+    "TelemetryCollector",
+    "RewardEngine",
+    "PreferenceLearner",
+    "PolicyLearner",
+    "RouterLearner",
+    "Evaluator",
 ]
-

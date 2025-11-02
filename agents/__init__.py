@@ -10,13 +10,12 @@ from .reflection_agent import ReflectionAgent
 from .gatekeeper_agent import GatekeeperAgent
 
 __all__ = [
-    'Agent',
-    'InstinctAdapter',
-    'InterfaceAgent',
-    'PlannerAgent',
-    'CuratorAgent',
-    'CodeGeneratorAgent',
-    'ReflectionAgent',
-    'GatekeeperAgent',
+    "Agent",
+    "InstinctAdapter",
+    "InterfaceAgent",
+    "PlannerAgent",
+    "CuratorAgent",
+    "CodeGeneratorAgent",
+    "ReflectionAgent",
+    "GatekeeperAgent",
 ]
-

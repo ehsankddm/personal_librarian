@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.11"
 
 [[package]]
@@ -675,11 +675,12 @@ wheels = [
 [[package]]
 name = "personal-librarian"
 version = "0.1.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "openai" },
     { name = "pydantic" },
+    { name = "python-env" },
 ]
 
 [package.optional-dependencies]
@@ -698,6 +699,7 @@ requires-dist = [
     { name = "openai", specifier = ">=1.0.0" },
     { name = "pydantic", specifier = ">=2.0.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
+    { name = "python-env", specifier = ">=1.0.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.1.0" },
 ]
 provides-extras = ["dev"]
@@ -951,6 +953,12 @@ sdist = { url = "https://files.pythonhosted.org/packages/a3/5c/00a0e072241553e1a
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a8/a4/20da314d277121d6534b3a980b29035dcd51e6744bd79075a6ce8fa4eb8d/pytest-8.4.2-py3-none-any.whl", hash = "sha256:872f880de3fc3a5bdc88a11b39c9710c3497a547cfa9320bc3c5e62fbf272e79", size = 365750, upload-time = "2025-09-04T14:34:20.226Z" },
 ]
+
+[[package]]
+name = "python-env"
+version = "1.0.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/b8/3f/9ddfac3cbce1dc3f016c17650f656fefd61b19529c5551d8465c58eb45e3/python-env-1.0.0.tar.gz", hash = "sha256:3582e82b2d49d45a612c19c16fa5a6cd061d0230b2f46671d47485e5ac103477", size = 2135, upload-time = "2015-05-26T10:23:29.997Z" }
 
 [[package]]
 name = "pytokens"

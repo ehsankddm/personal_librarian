@@ -8,6 +8,7 @@ from enum import Enum
 
 class MessageType(str, Enum):
     """Types of messages agents can send."""
+
     REQUEST = "request"
     RESPONSE = "response"
     NOTIFICATION = "notification"
@@ -18,6 +19,7 @@ class MessageType(str, Enum):
 
 class TaskStatus(str, Enum):
     """Status of a task."""
+
     PENDING = "pending"
     IN_PROGRESS = "in_progress"
     COMPLETED = "completed"
@@ -28,6 +30,7 @@ class TaskStatus(str, Enum):
 @dataclass
 class Message:
     """Standard message structure for agent communication."""
+
     message_type: MessageType
     sender_id: str
     content: str
@@ -42,6 +45,7 @@ class Message:
 @dataclass
 class Telemetry:
     """Telemetry data for learning."""
+
     agent_id: str
     action: str
     success: bool
@@ -54,6 +58,7 @@ class Telemetry:
 @dataclass
 class Task:
     """Task structure for agent coordination."""
+
     task_id: str
     description: str
     status: TaskStatus
@@ -67,7 +72,7 @@ def create_message(
     sender_id: str,
     content: str,
     receiver_id: Optional[str] = None,
-    **metadata
+    **metadata,
 ) -> Message:
     """Helper to create a message."""
     return Message(
@@ -75,6 +80,5 @@ def create_message(
         sender_id=sender_id,
         content=content,
         receiver_id=receiver_id,
-        metadata=metadata
+        metadata=metadata,
     )
-

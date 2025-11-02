@@ -6,9 +6,8 @@ from .society_memory import SocietyMemory
 from .archive import Archive
 
 __all__ = [
-    'MemoryLog',
-    'Recall',
-    'SocietyMemory',
-    'Archive',
+    "MemoryLog",
+    "Recall",
+    "SocietyMemory",
+    "Archive",
 ]
-

@@ -22,7 +22,7 @@ from memory.memory_log import MemoryLog
 async def test_planner():
     """Test Planner functionality."""
     print("🧪 Testing Planner Implementation\n")
-    
+
     # Initialize components
     print("📦 Initializing components...")
     message_bus = MessageBus()
@@ -30,24 +30,24 @@ async def test_planner():
     router_learner = RouterLearner(registry)
     society_memory = SocietyMemory()
     telemetry_collector = TelemetryCollector()
-    
+
     # Initialize Planner
     planner = Planner(
         registry=registry,
         message_bus=message_bus,
         router_learner=router_learner,
         society_memory=society_memory,
-        telemetry_collector=telemetry_collector
+        telemetry_collector=telemetry_collector,
     )
-    
+
     print("✓ Planner initialized")
-    
+
     # Create agents
     print("\n📦 Creating agents...")
     policy_manager = PolicyManager()
     executor = ActionExecutor()
     gatekeeper = Gatekeeper(policy_manager, executor)
-    
+
     interface_agent = InterfaceAgent(
         agent_id="InterfaceAgent_main_v1",
         role="InterfaceAgent",
@@ -59,10 +59,10 @@ async def test_planner():
         policies=policy_manager,
         telemetry_collector=telemetry_collector,
         memory_log=MemoryLog(),
-        gatekeeper=gatekeeper
+        gatekeeper=gatekeeper,
     )
     print("✓ InterfaceAgent created")
-    
+
     planner_agent = PlannerAgent(
         agent_id="PlannerAgent_main_v1",
         role="PlannerAgent",
@@ -75,51 +75,51 @@ async def test_planner():
         policies=policy_manager,
         telemetry_collector=telemetry_collector,
         memory_log=MemoryLog(),
-        gatekeeper=gatekeeper
+        gatekeeper=gatekeeper,
     )
     print("✓ PlannerAgent created")
-    
+
     # Test 1: Interpret intent
     print("\n✓ Test 1: interpret_intent")
     user_message = Message(
         message_type=MessageType.REQUEST,
         sender_id="user",
-        content="Import all new books from my Android downloads"
+        content="Import all new books from my Android downloads",
     )
     intent = await planner.interpret_intent(user_message)
     print(f"  Task Type: {intent.task_type}")
     print(f"  Goal: {intent.goal}")
     print(f"  Tags: {intent.tags}")
     assert intent.task_type == "ingestion"
-    
+
     # Test 2: Find candidates
     print("\n✓ Test 2: find_candidates")
     candidates = await planner.find_candidates(intent)
     print(f"  Found {len(candidates)} candidates")
-    
+
     # Test 3: Create task
     print("\n✓ Test 3: create_task")
     task = await planner.create_task("Test task")
     print(f"  Task ID: {task.task_id}")
     assert task.status == TaskStatus.PENDING
-    
+
     # Test 4: Receive message flow (missing capability scenario)
     print("\n✓ Test 4: receive_message (missing capability)")
     response = await planner.receive_message(user_message)
     print(f"  Response: {response.content[:100]}...")
     assert "create" in response.content.lower() or "missing" in response.content.lower()
-    
+
     # Test 5: PlannerAgent can_handle
     print("\n✓ Test 5: PlannerAgent can_handle")
     can_handle = await planner_agent.can_handle(user_message)
     print(f"  Can handle: {can_handle}")
     assert can_handle
-    
+
     # Test 6: Daily summary
     print("\n✓ Test 6: summarize_day")
     await planner.summarize_day()
     print("  Daily summary written to society memory")
-    
+
     print("\n🎉 All Planner tests passed!")
     print("\nImplemented features:")
     print("  ✓ interpret_intent method")
@@ -137,4 +137,3 @@ async def test_planner():
 
 if __name__ == "__main__":
     asyncio.run(test_planner())
-
