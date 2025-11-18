@@ -1,7 +1,7 @@
 """Society Memory - Manages society-level memory summaries."""
 
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Optional
 
 
@@ -17,7 +17,7 @@ class SocietyMemory:
     def add_entry(self, entry: str, timestamp: datetime = None):
         """Add an entry to the society memory."""
         if timestamp is None:
-            timestamp = datetime.now()
+            timestamp = datetime.now(UTC)
 
         date_str = timestamp.strftime("%Y-%m-%d")
         log_file = self.society_dir / f"{date_str}.md"
@@ -31,7 +31,7 @@ class SocietyMemory:
     def get_entry(self, date: datetime = None) -> str:
         """Get society memory for a specific date."""
         if date is None:
-            date = datetime.now()
+            date = datetime.now(UTC)
 
         date_str = date.strftime("%Y-%m-%d")
         log_file = self.society_dir / f"{date_str}.md"

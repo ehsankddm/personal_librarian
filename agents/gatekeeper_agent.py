@@ -5,6 +5,7 @@ from core.message import Message, MessageType
 from agents.agent_core import Agent
 from actions.action_request import ActionRequest
 from core.gatekeeper import Gatekeeper
+from core.llm_client import LLMClient
 
 
 class GatekeeperAgent(Agent):
@@ -222,3 +223,81 @@ Request ID: {action_request.request_id}
                 bundle["decision_reasoning"] = "Operation cannot be fully reversed"
 
         return bundle
+
+    async def advise_on(self, action_request: ActionRequest) -> Dict[str, Any]:
+        """Phase 2: Ask LLM Gateway for a non-binding advisory rationale.
+
+        Returns dict with keys: risk_summary, policy_refs, suggested_decision, user_prompt.
+        """
+        client = LLMClient()
+        bundle = self.analyze_action_request(action_request)
+
+        system_prompt = (
+            "You are the safety advisor. Return ONLY JSON with keys: "
+            "risk_summary (string), policy_refs (array of strings), "
+            "suggested_decision ('approve'|'deny'|'escalate'), user_prompt (string)."
+        )
+
+        result = await client.generate_reasoning(
+            context_bundle=bundle,
+            system_prompt=system_prompt,
+            tools=None,
+            temperature=0.0,
+            max_tokens=1024,
+        )
+
+        advisory = {
+            "risk_summary": "",
+            "policy_refs": [],
+            "suggested_decision": "escalate",
+            "user_prompt": "",
+            "_meta": {"model_name": result.get("model_name", "unknown"), "elapsed_ms": result.get("elapsed_ms", 0)},
+        }
+        parsed = result.get("parsed_json")
+        if isinstance(parsed, dict):
+            try:
+                advisory["risk_summary"] = str(parsed.get("risk_summary", ""))
+                pr = parsed.get("policy_refs") or []
+                advisory["policy_refs"] = [str(x) for x in pr if isinstance(x, str)]
+                sd = str(parsed.get("suggested_decision", "escalate")).lower()
+                if sd in {"approve", "deny", "escalate"}:
+                    advisory["suggested_decision"] = sd
+                advisory["user_prompt"] = str(parsed.get("user_prompt", ""))
+            except Exception:
+                pass
+
+        # Telemetry: record prompt/response
+        if self.telemetry_collector:
+            try:
+                from core.message import Telemetry
+
+                self.telemetry_collector.collect(
+                    Telemetry(
+                        agent_id=self.agent_id,
+                        action="llm_prompt",
+                        success=True,
+                        cost=0.0,
+                        duration_ms=result.get("elapsed_ms", 0),
+                        metadata={"model": result.get("model_name", "unknown"), "context_keys": list(bundle.keys())},
+                    )
+                )
+                self.telemetry_collector.collect(
+                    Telemetry(
+                        agent_id=self.agent_id,
+                        action="llm_response",
+                        success=True,
+                        cost=0.0,
+                        duration_ms=0.0,
+                        metadata={"model": result.get("model_name", "unknown"), "preview": (result.get("raw_text", "")[:200])},
+                    )
+                )
+            except Exception:
+                pass
+
+        # Dev print only
+        self.logger.info("\n— LLM ADVISORY (Gatekeeper) —")  # noqa: UP006
+        self.logger.info("suggested_decision: %s", advisory["suggested_decision"])  # noqa: UP006
+        self.logger.info("risk_summary: %s", advisory["risk_summary"])  # noqa: UP006
+        if advisory["policy_refs"]:
+            self.logger.info("policy_refs: %s", ", ".join(advisory["policy_refs"]))  # noqa: UP006
+        return advisory

@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass, field
 from typing import Any
-from datetime import datetime
+from datetime import datetime, UTC
 from enum import Enum
 import uuid
 
@@ -82,14 +82,14 @@ class ActionRequest:
     requires_user_approval: bool = False
 
     # Timestamp
-    timestamp_utc: str = field(default_factory=lambda: datetime.now().isoformat())
+    timestamp_utc: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
     def __post_init__(self):
         """Validate the action request after initialization."""
         if not self.request_id:
             self.request_id = str(uuid.uuid4())
         if not self.timestamp_utc:
-            self.timestamp_utc = datetime.now().isoformat()
+            self.timestamp_utc = datetime.now(UTC).isoformat()
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization."""

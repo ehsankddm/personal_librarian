@@ -1,7 +1,7 @@
 """Agent core - Base class for all agents conforming to AGENT.md specification."""
 
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -321,7 +321,7 @@ Options:
         """
         if self.memory_log:
             self.memory_log.log_entry(
-                agent_id=self.agent_id, entry=entry, timestamp=timestamp or datetime.now()
+                agent_id=self.agent_id, entry=entry, timestamp=timestamp or datetime.now(UTC)
             )
 
     # === Lifecycle (Section 10) ===
@@ -337,7 +337,7 @@ Options:
         """
         # Write final memory entry
         self.log_memory_entry(
-            f"# Retirement Notice\n\nReason: {reason}\n\nRetired at: {datetime.now()}"
+            f"# Retirement Notice\n\nReason: {reason}\n\nRetired at: {datetime.now(UTC).isoformat()}"
         )
 
         # Mark as retired

@@ -2,7 +2,7 @@
 
 from typing import Any, Optional
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 import logging
 
@@ -189,7 +189,7 @@ class Gatekeeper:
     def log_decision(self, request: ActionRequest, decision: GatekeeperDecision):
         """Log the gatekeeper's decision for audit trail."""
         log_entry = {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
             "request_id": request.request_id,
             "requester": request.requester_agent_id,
             "action_type": request.action_type.value if request.action_type else None,

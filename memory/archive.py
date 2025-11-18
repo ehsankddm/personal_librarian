@@ -1,7 +1,7 @@
 """Archive - Archives old memories for long-term storage."""
 
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, UTC
 import shutil
 
 
@@ -15,13 +15,13 @@ class Archive:
 
     def archive_old_memories(self, days_threshold: int = 90):
         """Archive memories older than threshold."""
-        cutoff_date = datetime.now() - timedelta(days=days_threshold)
+        cutoff_date = datetime.now(UTC) - timedelta(days=days_threshold)
 
         # Archive society memories
         society_dir = self.base_path / "society"
         if society_dir.exists():
             for file in society_dir.glob("*.md"):
-                file_date = datetime.fromtimestamp(file.stat().st_mtime)
+                file_date = datetime.fromtimestamp(file.stat().st_mtime, UTC)
                 if file_date < cutoff_date:
                     archive_path = self.archive_path / "society" / file.name
                     archive_path.parent.mkdir(parents=True, exist_ok=True)
@@ -33,7 +33,7 @@ class Archive:
             for agent_dir in agents_dir.iterdir():
                 if agent_dir.is_dir():
                     for file in agent_dir.glob("*.md"):
-                        file_date = datetime.fromtimestamp(file.stat().st_mtime)
+                        file_date = datetime.fromtimestamp(file.stat().st_mtime, UTC)
                         if file_date < cutoff_date:
                             archive_path = self.archive_path / "agents" / agent_dir.name / file.name
                             archive_path.parent.mkdir(parents=True, exist_ok=True)

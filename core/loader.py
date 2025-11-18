@@ -4,6 +4,7 @@ import importlib
 import importlib.util
 from pathlib import Path
 from typing import Type, Dict, Any, TYPE_CHECKING
+import json
 
 if TYPE_CHECKING:
     from agents.agent_core import Agent
@@ -39,3 +40,21 @@ class AgentLoader:
         """Load an agent from a generated specification."""
         # TODO: Implement generation-based loading
         pass
+
+    def load_dynamic_agent(self, manifest_path: str) -> Type["Agent"]:
+        """
+        Load a dynamically generated agent class from a manifest.
+
+        Assumes scaffold layout created by CodeGeneratorAgent:
+        agents/dynamic/<AgentName>/<agentname_lower>.py defines class <AgentName>.
+        """
+        mp = Path(manifest_path)
+        manifest = json.loads(mp.read_text())
+        agent_name = manifest["agent_name"]
+        module_filename = f"{agent_name.lower()}.py"
+
+        module_rel = Path("agents/dynamic") / agent_name / module_filename
+        if not module_rel.exists():
+            raise FileNotFoundError(f"Module not found: {module_rel}")
+
+        return self.load_agent_class(str(module_rel), agent_name)

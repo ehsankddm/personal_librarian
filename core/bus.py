@@ -1,10 +1,14 @@
-"""Message Bus - Shared async queue for all agent communications per PLANNER.md."""
+"""Message Bus - Shared async queue for all agent communications per PLANNER.md.
+
+Persists all published and dispatched messages via TelemetryCollector when provided.
+"""
 
 import asyncio
 from typing import Callable, Any
-from datetime import datetime
+from datetime import datetime, UTC
 
 from core.message import Message
+from typing import Optional
 
 
 class MessageBus:
@@ -14,11 +18,12 @@ class MessageBus:
     Central communication backbone where all agents publish and subscribe to messages.
     """
 
-    def __init__(self):
+    def __init__(self, telemetry_collector: Optional[any] = None):
         self.queue = asyncio.Queue()
         self.subscribers: dict[str, list[Callable]] = {}
         self.message_history: list[Message] = []
         self.running = False
+        self.telemetry_collector = telemetry_collector
 
     async def publish(self, message: Message, direct_dispatch: bool = False):
         """
@@ -33,9 +38,26 @@ class MessageBus:
             direct_dispatch = False
 
         if not message.message_id:
-            message.message_id = f"{message.sender_id}_{datetime.now().isoformat()}"
+            message.message_id = f"{message.sender_id}_{datetime.now(UTC).isoformat()}"
 
         self.message_history.append(message)
+
+        # Persist published message
+        if self.telemetry_collector:
+            try:
+                self.telemetry_collector.record_message(
+                    stage="published",
+                    message_id=message.message_id,
+                    message_type=message.message_type.value,
+                    sender_id=message.sender_id,
+                    receiver_id=message.receiver_id,
+                    content=message.content,
+                    timestamp=message.timestamp.isoformat(),
+                    tags=message.tags,
+                    metadata=message.metadata,
+                )
+            except Exception:
+                pass
 
         if direct_dispatch:
             await self._dispatch(message)
@@ -73,8 +95,9 @@ class MessageBus:
     async def _dispatch(self, message: Message):
         """Dispatch message to appropriate subscribers."""
         # Log message
+        preview = message.content if message.content is None else message.content[:200]
         print(
-            f"[Message Bus] {message.sender_id} -> {message.receiver_id or 'broadcast'}: {message.content[:80]}",
+            f"[Message Bus] {message.sender_id} -> {message.receiver_id or 'broadcast'}: {preview}",
             flush=True,
         )
 
@@ -82,6 +105,22 @@ class MessageBus:
         if message.receiver_id:
             if message.receiver_id in self.subscribers:
                 for handler in self.subscribers[message.receiver_id]:
+                    # Persist dispatch record per handler
+                    if self.telemetry_collector:
+                        try:
+                            self.telemetry_collector.record_message(
+                                stage="dispatched",
+                                message_id=message.message_id,
+                                message_type=message.message_type.value,
+                                sender_id=message.sender_id,
+                                receiver_id=message.receiver_id,
+                                content=message.content,
+                                timestamp=message.timestamp.isoformat(),
+                                tags=message.tags,
+                                metadata=message.metadata,
+                            )
+                        except Exception:
+                            pass
                     try:
                         response = await handler(message)
                         # If handler returns a message, publish it
@@ -100,6 +139,22 @@ class MessageBus:
                 continue
 
             for handler in handlers:
+                # Persist dispatch for each broadcast recipient
+                if self.telemetry_collector:
+                    try:
+                        self.telemetry_collector.record_message(
+                            stage="dispatched",
+                            message_id=message.message_id,
+                            message_type=message.message_type.value,
+                            sender_id=message.sender_id,
+                            receiver_id=agent_id,
+                            content=message.content,
+                            timestamp=message.timestamp.isoformat(),
+                            tags=message.tags,
+                            metadata=message.metadata,
+                        )
+                    except Exception:
+                        pass
                 try:
                     await handler(message)
                 except Exception as e:

@@ -31,9 +31,9 @@ class Recall:
             return []
 
         # Get today's log file
-        from datetime import datetime
+        from datetime import datetime, UTC
 
-        today_str = datetime.now().strftime("%Y-%m-%d")
+        today_str = datetime.now(UTC).strftime("%Y-%m-%d")
         log_file = agent_dir / f"{today_str}.md"
 
         if not log_file.exists():

@@ -1,7 +1,7 @@
 """Message types and utilities for agent communication."""
 
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import Any, Optional
 from enum import Enum
 
@@ -34,7 +34,7 @@ class Message:
     message_type: MessageType
     sender_id: str
     content: str
-    timestamp: datetime = field(default_factory=datetime.now)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     message_id: str = ""
     receiver_id: Optional[str] = None
     task_id: Optional[str] = None
@@ -51,7 +51,7 @@ class Telemetry:
     success: bool
     cost: float
     duration_ms: float
-    timestamp: datetime = field(default_factory=datetime.now)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(UTC))
     metadata: dict[str, Any] = field(default_factory=dict)
 
 
@@ -62,7 +62,7 @@ class Task:
     task_id: str
     description: str
     status: TaskStatus
-    created_at: datetime = field(default_factory=datetime.now)
+    created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     assigned_to: Optional[str] = None
     metadata: dict[str, Any] = field(default_factory=dict)
 

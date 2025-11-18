@@ -2,7 +2,7 @@
 
 import asyncio
 from typing import Optional, List, Dict, Any
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 from dataclasses import dataclass, field
 import uuid
@@ -151,6 +151,10 @@ class Planner:
         Query registry for active replicas with relevant capabilities.
         Per PLANNER.md Section 5.2(2)
         """
+        # Avoid routing loops: if we cannot infer a task type, defer to
+        # missing-capability handling instead of routing back to core agents.
+        if intent.task_type == "unknown":
+            return []
         # Map task types to roles
         task_to_role = {
             "ingestion": "IngestionAgent",
@@ -439,7 +443,7 @@ class Planner:
 
     async def create_task(self, description: str, metadata: dict = None) -> Task:
         """Create a new task."""
-        task_id = f"task_{datetime.now().isoformat()}"
+        task_id = f"task_{datetime.now(UTC).isoformat()}"
         task = Task(
             task_id=task_id,
             description=description,
@@ -469,7 +473,7 @@ class Planner:
             "intent": intent,
             "chosen_agent": chosen_agent,
             "alternatives_considered": alternatives_considered,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
         self.routing_history.append(decision)
 

@@ -1,7 +1,7 @@
 """Memory Log - Manages agent memory diaries."""
 
 from pathlib import Path
-from datetime import datetime
+from datetime import datetime, UTC
 from typing import List, Optional
 
 
@@ -15,7 +15,7 @@ class MemoryLog:
     def log_entry(self, agent_id: str, entry: str, timestamp: datetime = None):
         """Append an entry to an agent's memory log."""
         if timestamp is None:
-            timestamp = datetime.now()
+            timestamp = datetime.now(UTC)
 
         date_str = timestamp.strftime("%Y-%m-%d")
         agent_dir = self.base_path / "agents" / agent_id
@@ -32,7 +32,7 @@ class MemoryLog:
     def get_log(self, agent_id: str, date: datetime = None) -> str:
         """Retrieve an agent's memory log for a specific date."""
         if date is None:
-            date = datetime.now()
+            date = datetime.now(UTC)
 
         date_str = date.strftime("%Y-%m-%d")
         log_file = self.base_path / "agents" / agent_id / f"{date_str}.md"

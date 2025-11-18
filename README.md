@@ -56,6 +56,51 @@ python run_dev.py
 - `PHASE_0_PLANNER.md` - Planner and Message Bus implementation
 - `PHASE_0_REGISTRY.md` - Registry and Replica Management
 
+## 🧪 Phase 2 — LLM + Safe Codegen
+
+- Demo: `PHASE2_DEV=1 uv run --extra dev python run_dev.py` (interactive CLI is default).
+- LLM Gateway `.env` (loaded by `run_dev.py`):
+  - `LLM_BASE=http://localhost:7766`
+  - `LLM_API_KEY=your-key`
+  - `LLM_MODEL_ALIAS=gpt-4o-mini`
+- Missing capability → CodeGeneratorAgent writes:
+  - Draft spec: `agents_generated_specs/drafts/*.md`
+  - Scaffold + `MANIFEST.json`: `agents/dynamic/<AgentName>/`
+- Approvals (type in CLI):
+  - Approve load: `approve load [agents/dynamic/<AgentName>/MANIFEST.json]`
+  - Activate agent: `activate agent <AgentName>`
+  - Both actions are approved by Gatekeeper and logged.
+
+## 🧷 Telemetry & Message Persistence
+
+- Logs:
+  - Runtime: `logs/runtime.log`
+  - Gatekeeper audit: `logs/audit_actions.log`
+- SQLite DB: `state/telemetry.db`
+  - `telemetry` table: agent events (action, success, metadata)
+  - `messages` table: every bus message (published and dispatched)
+
+Query examples (last 10 minutes):
+
+```bash
+# Recent bus messages
+sqlite3 state/telemetry.db \
+  "SELECT id, stage, type, sender_id, receiver_id, timestamp, substr(content,1,200) AS content
+   FROM messages WHERE created_at >= datetime('now','-10 minutes') ORDER BY id;"
+
+# Recent telemetry events
+sqlite3 state/telemetry.db \
+  "SELECT id, agent_id, action, success, duration_ms, timestamp, substr(metadata,1,200) AS meta
+   FROM telemetry WHERE created_at >= datetime('now','-10 minutes') ORDER BY id;"
+
+# Totals
+sqlite3 state/telemetry.db "SELECT COUNT(*) FROM messages;"
+```
+
+Notes:
+- Interactive CLI prints user messages; the bus log shows a short preview.
+- LLM calls record `llm_prompt` and `llm_response` with redaction; CodeGen emits `codegen_spec_draft` and `codegen_scaffold_rendered`.
+
 ## 🏗️ Architecture
 
 Built on principles of:
@@ -68,4 +113,3 @@ Built on principles of:
 ## 📝 License
 
 MIT License
-

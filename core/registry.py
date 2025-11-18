@@ -3,7 +3,7 @@
 import json
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field, asdict
-from datetime import datetime
+from datetime import datetime, UTC
 from pathlib import Path
 
 
@@ -54,8 +54,8 @@ class AgentInfo:
 
     capabilities_summary: str = ""
 
-    created_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
-    last_active_at: str = field(default_factory=lambda: datetime.utcnow().isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    last_active_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     retired_at: Optional[str] = None
     retire_reason: Optional[str] = None
 
@@ -111,7 +111,7 @@ class Registry:
         """Persist registry state to disk."""
         data = {
             "agents": {agent_id: agent.to_dict() for agent_id, agent in self.agents.items()},
-            "last_updated": datetime.utcnow().isoformat(),
+            "last_updated": datetime.now(UTC).isoformat(),
         }
         self.persistence_path.write_text(json.dumps(data, indent=2))
 
@@ -245,7 +245,7 @@ class Registry:
                 )
 
         # Update last_active_at
-        agent.last_active_at = datetime.utcnow().isoformat()
+        agent.last_active_at = datetime.now(UTC).isoformat()
 
         # Persist
         self.save_state()
@@ -336,7 +336,7 @@ class Registry:
         agent = self.agents[agent_id]
         agent.status = "retired"
         agent.alive = False
-        agent.retired_at = datetime.utcnow().isoformat()
+        agent.retired_at = datetime.now(UTC).isoformat()
         agent.retire_reason = reason
 
         # Persist
@@ -355,11 +355,11 @@ class Registry:
             memory_dir = Path("memory/agents") / agent.agent_id
             memory_dir.mkdir(parents=True, exist_ok=True)
 
-            today = datetime.now().strftime("%Y-%m-%d")
+            today = datetime.now(UTC).strftime("%Y-%m-%d")
             memory_file = memory_dir / f"{today}.md"
 
             entry = f"""
-## [{datetime.now().isoformat()}Z] RETIREMENT
+## [{datetime.now(UTC).isoformat()}] RETIREMENT
 
 - I am {agent.agent_id}.
 - Reason for retirement: {reason}
@@ -424,3 +424,43 @@ class Registry:
             "roles": len(self.roles),
             "unique_roles": self.all_active_roles(),
         }
+
+    # === Dynamic Agent Registration (Phase 2) ===
+
+    def register_dynamic_agent(self, manifest: Dict[str, Any]) -> None:
+        """
+        Register a dynamically generated agent scaffold in the registry with provenance.
+
+        This does not auto-activate the agent; caller must decide status.
+        """
+        agent_name = manifest.get("agent_name")
+        if not agent_name:
+            raise ValueError("manifest.agent_name is required")
+
+        # Minimal placeholder entry; real traits/capabilities will be filled when loaded
+        info = AgentInfo(
+            agent_id=agent_name,
+            role=agent_name.replace("Agent", "Agent"),
+            traits={"generated": True},
+            instinct_paths=[],
+            status="quarantined",  # default staged state
+            alive=False,
+            capabilities_summary=f"Generated scaffold from manifest {manifest.get('spec_path','')}.",
+        )
+        self.agents[agent_name] = info
+        self.roles.setdefault(info.role, []).append(agent_name)
+        self.save_state()
+
+    def activate_agent(self, agent_id: str) -> bool:
+        """Activate a previously registered (quarantined) dynamic agent."""
+        agent = self.agents.get(agent_id)
+        if not agent:
+            return False
+        agent.status = "active"
+        agent.alive = True
+        # Ensure role index contains this agent
+        self.roles.setdefault(agent.role, [])
+        if agent_id not in self.roles[agent.role]:
+            self.roles[agent.role].append(agent_id)
+        self.save_state()
+        return True

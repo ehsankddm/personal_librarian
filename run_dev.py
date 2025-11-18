@@ -67,11 +67,11 @@ async def main():
     logger.info("Initializing core components...")
 
     # Initialize core infrastructure
-    message_bus = MessageBus()
     registry = Registry()
     router_learner = RouterLearner(registry)
     society_memory = SocietyMemory()
     telemetry_collector = TelemetryCollector()
+    message_bus = MessageBus(telemetry_collector=telemetry_collector)
     policy_manager = PolicyManager()
     preference_manager = PreferenceManager()
 
@@ -198,6 +198,10 @@ async def main():
     ]
 
     for agent in agents:
+        # Avoid duplicate registrations across dev runs
+        if registry.get_agent(agent.agent_id):
+            logger.info(f"Agent already registered: {agent.agent_id}, skipping register")
+            continue
         registry.register_agent(
             agent_id=agent.agent_id,
             role=agent.role,
@@ -223,6 +227,9 @@ async def main():
     message_bus.subscribe("user", interface_agent.handle)
     message_bus.subscribe("User", interface_agent.handle)
 
+    # Subscribe CodeGeneratorAgent under role alias
+    message_bus.subscribe("CodeGeneratorAgent", code_generator_agent.handle)
+
     logger.info("Message bus subscriptions complete")
 
     # Start message bus
@@ -243,23 +250,31 @@ async def main():
             f"{len(agent.instinct_text)} chars of behavior DNA"
         )
 
-    # Test: Simulate one user request to prove "society is alive"
-    logger.info("\n=== Testing Society Communication ===")
-    logger.info("Simulating user request: 'Import all new books from my Android downloads'")
+    # Interactive mode default: on (set INTERACTIVE=0 to disable)
+    interactive_env = os.environ.get("INTERACTIVE", "1").strip().lower()
+    interactive_mode = interactive_env not in {"0", "false", "no"}
 
-    user_message = Message(
-        message_type=MessageType.REQUEST,
-        sender_id="user",
-        content="Import all new books from my Android downloads",
-        receiver_id=None,
-    )
+    # Initialize placeholder for last user message (may be None in interactive mode)
+    user_message: Message | None = None
 
-    # Send through InterfaceAgent
-    print("\n[User] Import all new books from my Android downloads\n")
-    await interface_agent.handle(user_message)
+    if not interactive_mode:
+        # Test: Simulate one user request to prove "society is alive"
+        logger.info("\n=== Testing Society Communication ===")
+        logger.info("Simulating user request: 'Import all new books from my Android downloads'")
 
-    # Give agents time to process
-    await asyncio.sleep(0.5)
+        user_message = Message(
+            message_type=MessageType.REQUEST,
+            sender_id="user",
+            content="Import all new books from my Android downloads",
+            receiver_id=None,
+        )
+
+        # Send through InterfaceAgent
+        print("\n[User] Import all new books from my Android downloads\n")
+        await interface_agent.handle(user_message)
+
+        # Give agents time to process
+        await asyncio.sleep(0.5)
 
     # Phase 1: Print LLM context bundles in dev mode
     phase1_mode = os.environ.get("PHASE1_DEV") == "1"
@@ -271,7 +286,7 @@ async def main():
         print(f"\n--- LLM CONTEXT ({planner_agent.agent_id}) ---", flush=True)
 
         # Get a planner context bundle (would have been built during handle)
-        # For demo, we'll generate one now
+        # For demo or interactive, generate from the last message if available
         planner_context = planner_agent.build_llm_context(user_message)
         print("agent_identity.role:", planner_context["agent_identity"]["role"], flush=True)
         print("agent_identity.agent_id:", planner_context["agent_identity"]["agent_id"], flush=True)
@@ -293,14 +308,105 @@ async def main():
     logger.info("=== Test Complete ===")
     logger.info("\nMessages processed. Society is operational!")
 
-    # Keep running
-    try:
-        await asyncio.Event().wait()
-    except KeyboardInterrupt:
-        logger.info("Shutting down gracefully...")
-        # Stop message bus
-        message_bus.stop()
-        logger.info("MVS shutdown complete")
+    # Phase 2: LLM-assisted dry-run decision (requires local gateway)
+    phase2_mode = os.environ.get("PHASE2_DEV") == "1"
+    if phase2_mode:
+        logger.info("\n=== Phase 2: LLM-Assisted Planner Decision (Dry-Run) ===")
+        try:
+            # Reuse the previously built context, or build from last message (may be None)
+            if not phase1_mode:
+                planner_context = planner_agent.build_llm_context(user_message)
+            decision = await planner_agent.reason_with_llm(planner_context)
+            # For dev UX also send a notification to InterfaceAgent so it prints to console
+            await message_bus.publish(
+                Message(
+                    message_type=MessageType.NOTIFICATION,
+                    sender_id=planner_agent.agent_id,
+                    receiver_id="user",
+                    content=(
+                        "— LLM DECISION (Planner) —\n"
+                        f"chosen_route: {decision['chosen_route']}\n"
+                        f"confidence: {decision['confidence']:.2f}\n"
+                        f"needs_user_confirmation: {decision['needs_user_confirmation']}"
+                    ),
+                ),
+                direct_dispatch=True,
+            )
+        except Exception as e:
+            logger.error(f"Phase 2 LLM decision failed: {e}")
+
+        # Demonstrate Gatekeeper advisory once with a mock request
+        try:
+            from actions.action_request import ActionRequest, ActionType, Reversibility, DataSensitivity
+
+            mock_req = ActionRequest(
+                requester_agent_id="PlannerAgent_main_v1",
+                requester_role="PlannerAgent",
+                action_type=ActionType.NETWORK_UPLOAD,
+                justification="Upload sample metadata to cloud",
+                user_impact="May incur network usage",
+                data_sensitivity=DataSensitivity.MEDIUM,
+                estimated_cost_eur=0.0,
+                estimated_runtime_sec=1.0,
+                reversibility=Reversibility.SOFT_REVERSIBLE,
+                requires_user_approval=False,
+            )
+            advisory = await gatekeeper_agent.advise_on(mock_req)
+            await message_bus.publish(
+                Message(
+                    message_type=MessageType.NOTIFICATION,
+                    sender_id=gatekeeper_agent.agent_id,
+                    receiver_id="user",
+                    content=(
+                        "— LLM ADVISORY (Gatekeeper) —\n"
+                        f"suggested_decision: {advisory.get('suggested_decision')}\n"
+                        f"risk_summary: {advisory.get('risk_summary')}"
+                    ),
+                ),
+                direct_dispatch=True,
+            )
+        except Exception as e:
+            logger.error(f"Gatekeeper advisory failed: {e}")
+
+    async def interactive_chat() -> None:
+        print("\nEntering interactive mode. Type 'exit' to quit.\n")
+        try:
+            while True:
+                try:
+                    # Read line without blocking the event loop
+                    line = await asyncio.to_thread(input, "[You] ")
+                except EOFError:
+                    break
+                if line is None:
+                    continue
+                line = line.strip()
+                if line.lower() in {"exit", "quit", ":q", "\":q\""}:
+                    break
+                if not line:
+                    continue
+
+                msg = Message(
+                    message_type=MessageType.REQUEST,
+                    sender_id="user",
+                    content=line,
+                )
+                await interface_agent.handle(msg)
+                # allow handlers to process
+                await asyncio.sleep(0.1)
+        except KeyboardInterrupt:
+            pass
+
+    if interactive_mode:
+        await interactive_chat()
+    else:
+        # Keep running
+        try:
+            await asyncio.Event().wait()
+        except KeyboardInterrupt:
+            logger.info("Shutting down gracefully...")
+            # Stop message bus
+            message_bus.stop()
+            logger.info("MVS shutdown complete")
 
 
 if __name__ == "__main__":
